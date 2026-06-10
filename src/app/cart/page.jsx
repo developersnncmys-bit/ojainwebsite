@@ -6,20 +6,8 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { FaTrash, FaMapMarkerAlt, FaCheckCircle, FaLeaf, FaArrowLeft, FaPlus, FaMinus, FaMotorcycle, FaCreditCard, FaMoneyBillWave, FaLock } from "react-icons/fa";
-import { addressAPI, orderAPI, paymentAPI } from "../../../services/api";
+import { addressAPI, orderAPI } from "../../../services/api";
 import getImageUrl from "../../../utils/getImageUrl";
-
-// Lazily injects the Razorpay checkout.js script (only once)
-function loadRazorpayScript() {
-  return new Promise((resolve) => {
-    if (typeof window !== "undefined" && window.Razorpay) { resolve(true); return; }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
 
 const STEPS = ["🛒 Cart", "📍 Address", "💳 Payment"];
 const EMPTY_ADDR = { label: "Home", fullName: "", street: "", landmark: "", city: "", state: "", zipCode: "", phone: "", isDefault: false };
@@ -155,76 +143,21 @@ export default function CartPage() {
     } finally { setLoading(false); }
   };
 
-  // ── Razorpay flow ──────────────────────────────────────────────────────────
+  // ── Online payment flow ─────────────────────────────────────────────────────
+  // No payment backend in this UI-only build — simulate a successful online payment.
   const placeRazorpayOrder = async () => {
     setLoading(true);
     try {
-      // 1. Load checkout script
-      const ok = await loadRazorpayScript();
-      if (!ok) { alert("Could not load Razorpay. Check your internet connection."); setLoading(false); return; }
-
-      // 2. Create order on server (secret key stays server-side)
-      const orderData = await paymentAPI.createOrder(finalTotal);
-      if (orderData.error) { alert(orderData.error); setLoading(false); return; }
-
-      // 3. Open Razorpay checkout popup
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.amount,    // paise, returned by create-order
-        currency: orderData.currency,
-        name: "Ojain Pure Veg",
-        description: "Food Delivery",
-        image: "/logo.png",
-        order_id: orderData.orderId,
-        prefill: {
-          name: user?.name || "",
-          email: user?.email || "",
-          contact: user?.phone || "",
-        },
-        theme: { color: "#2E7D32" },
-
-        handler: async (response) => {
-          // 4. Verify signature server-side
-          const verified = await paymentAPI.verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-
-          if (!verified.success) {
-            alert("Payment verification failed. Please contact support with Payment ID: " + response.razorpay_payment_id);
-            setLoading(false);
-            return;
-          }
-
-          // 5. Save order in your backend
-          try {
-            await orderAPI.create({
-              addressId: selectedAddressId,
-              paymentMethod: "Razorpay",
-              paymentId: response.razorpay_payment_id,
-              razorpayOrderId: response.razorpay_order_id,
-            });
-            await fetchCart();
-            router.push("/order-confirmation");
-          } catch (err) {
-            alert(err?.response?.data?.message || "Payment succeeded but order save failed. Contact support.");
-          } finally { setLoading(false); }
-        },
-
-        modal: {
-          ondismiss: () => setLoading(false), // user closed popup without paying
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.on("payment.failed", (resp) => {
-        alert("Payment failed: " + (resp.error?.description || "Unknown error"));
-        setLoading(false);
+      await orderAPI.create({
+        addressId: selectedAddressId,
+        paymentMethod: "Razorpay",
+        paymentId: `mock_pay_${Date.now()}`,
       });
-      rzp.open();
+      await fetchCart();
+      router.push("/order-confirmation");
     } catch (err) {
-      alert("Failed to initiate payment. Please try again.");
+      alert(err?.response?.data?.message || "Order failed. Please try again.");
+    } finally {
       setLoading(false);
     }
   };

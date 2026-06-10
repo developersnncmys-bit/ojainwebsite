@@ -19,10 +19,8 @@ import {
 /* ── image helper ─────────────────────────────────────── */
 const getImageUrl = (p) => {
   if (!p) return "/category1.jpg";
-  if (p.startsWith("http") || p.startsWith("blob:")) return p;
-  let n = p.replace(/\\/g, "/");
-  if (n.startsWith("/")) n = n.slice(1);
-  return `${process.env.NEXT_PUBLIC_API_URL || "https://ojain-backend-2.onrender.com"}/${n}`;
+  if (p.startsWith("/") || p.startsWith("http") || p.startsWith("blob:")) return p;
+  return `/${p.replace(/\\/g, "/")}`;
 };
 
 /* ── field wrapper ────────────────────────────────────── */

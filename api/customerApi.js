@@ -4,8 +4,8 @@
 
 import api from "../utils/axios";
 
-// BASE URL
-const BASE = "/api/auth";
+// BASE URL — storefront customer auth (separate from admin /api/auth)
+const BASE = "/api/auth/customer";
 
 // REGISTER
 export const registerCustomer = (data) =>

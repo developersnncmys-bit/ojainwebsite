@@ -1,106 +1,71 @@
+// utils/axios.js
+// ──────────────────────────────────────────────────────────────────────────
+// REAL API CLIENT — talks to the OJAIN Express backend (ojain-admin/server).
+//
+// Base URL comes from NEXT_PUBLIC_API_URL (see .env.local); defaults to the
+// local dev server on :5000.
+//
+// Two response shapes from the backend are normalised here so the rest of the
+// app can stay simple:
+//   1. Envelope unwrap — list/detail endpoints reply { success, data, ... }.
+//      We replace response.data with the inner `data` so stores receive the
+//      array/object directly. Auth replies ({ success, token, customer }) have
+//      no `data` key and pass through untouched.
+//   2. id -> _id — Mongoose docs are serialised with `id` (see schemaOptions),
+//      but the whole frontend was written against `_id`. We add `_id` back.
+// ──────────────────────────────────────────────────────────────────────────
+
 import axios from "axios";
-import toast from "react-hot-toast";
+
+// Production default points at the Render-hosted API. For local dev, set
+// NEXT_PUBLIC_API_URL=http://localhost:5000 in .env.local (already provided).
+const baseURL =
+  process.env.NEXT_PUBLIC_API_URL || "https://ojainbackend.onrender.com";
 
 const api = axios.create({
-  baseURL: "https://ojain-backend-2.onrender.com",
-  // baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000",
-  withCredentials: true,
-  // timeout: 20000, // 20 s — covers Render.com free-tier cold starts
+  baseURL,
+  headers: { "Content-Type": "application/json" },
 });
 
-// ==========================================
-// REQUEST INTERCEPTOR
-// ==========================================
-api.interceptors.request.use(
-  (config) => {
-    // Track start time so we can warn on slow responses
-    config._startTime = Date.now();
+// Attach the stored JWT (customer or admin) to every request.
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-    if (typeof window !== "undefined") {
-      const adminToken = localStorage.getItem("adminToken");
-      const token = localStorage.getItem("token");
-      // const finalToken = adminToken || token;
-      const finalToken = token || adminToken;
-      if (finalToken) {
-        config.headers.Authorization = `Bearer ${finalToken}`;
+// Recursively ensure every object that has `id` also exposes `_id`.
+const withMongoId = (value) => {
+  if (Array.isArray(value)) return value.map(withMongoId);
+  if (value && typeof value === "object") {
+    if (value.id !== undefined && value._id === undefined) value._id = value.id;
+    for (const key of Object.keys(value)) {
+      if (value[key] && typeof value[key] === "object") {
+        value[key] = withMongoId(value[key]);
       }
     }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+  }
+  return value;
+};
 
-// ==========================================
-// RESPONSE INTERCEPTOR
-// ==========================================
 api.interceptors.response.use(
   (response) => {
-    // Warn the user if the server took an unusually long time (Render cold start)
-    const elapsed = Date.now() - (response.config._startTime || Date.now());
-    if (elapsed > 8000 && typeof window !== "undefined") {
-      toast("Server response was slow. It may have been waking up.", {
-        icon: "⚡",
-        duration: 3000,
-      });
+    let body = response.data;
+    // Unwrap the { success, data } envelope (but keep auth payloads intact).
+    if (
+      body &&
+      typeof body === "object" &&
+      "success" in body &&
+      "data" in body
+    ) {
+      body = body.data;
     }
+    response.data = withMongoId(body);
     return response;
   },
-  (error) => {
-    if (typeof window === "undefined") return Promise.reject(error);
-
-    const status = error.response?.status;
-
-    if (error.code === "ECONNABORTED" || error.message?.includes("timeout")) {
-      toast.error(
-        "Server is taking too long. It may be starting up — please try again in a moment.",
-        { duration: 6000 }
-      );
-    } else if (!error.response) {
-      // Network error (server unreachable, CORS, etc.)
-      toast.error("Cannot reach server. Please check your internet connection.", {
-        duration: 5000,
-      });
-    }
-    // else if (status === 401) {
-    //   // Token expired or invalid — clear credentials and redirect
-    //   localStorage.removeItem("token");
-    //   localStorage.removeItem("adminToken");
-    //   const path = window.location.pathname;
-    //   const isLoginPage =
-    //     path.includes("login") || path.includes("Login") || path === "/adminlogin";
-    //   if (!isLoginPage) {
-    //     toast.error("Session expired. Please log in again.");
-    //     // window.location.href = "/customerLogin/login";
-    //     window.location.href = "/";
-    //   }
-    // } 
-    else if (status === 401) {
-      const adminToken =
-        localStorage.getItem(
-          "adminToken"
-        );
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("adminToken");
-
-      toast.error(
-        "Session expired. Please login again."
-      );
-
-      if (adminToken) {
-        window.location.href =
-          "/adminlogin";
-      } else {
-        window.location.href =
-          "/";
-      }
-    }
-    else if (status >= 500) {
-      toast.error("Server error. Please try again later.", { duration: 4000 });
-    }
-
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

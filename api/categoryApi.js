@@ -1,11 +1,13 @@
 import api from "../utils/axios";
-const CATEGORY_BASE = "/api/category";
 
-// Get all categories
+// Backend mounts categories at /api/categories (REST). GET is public; writes
+// require an admin token (attached automatically from localStorage).
+const CATEGORY_BASE = "/api/categories";
+
+// Get all categories — interceptor already unwraps { success, data } -> array.
 export const getAllCategories = async () => {
-  const response = await api.get(`${CATEGORY_BASE}/all`);
-  // assuming backend returns { categories: [...] } or array directly
-  return response.data.categories || response.data || [];
+  const response = await api.get(CATEGORY_BASE);
+  return response.data || [];
 };
 
 // Get single category by ID
@@ -14,24 +16,20 @@ export const getSingleCategory = async (categoryId) => {
   return response.data;
 };
 
-// Create category (with image file)
-export const createCategory = async (formData) => {
-  const response = await api.post(`${CATEGORY_BASE}/create`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+// Create category (JSON body; `image` may be a URL or base64 string)
+export const createCategory = async (data) => {
+  const response = await api.post(CATEGORY_BASE, data);
   return response.data;
 };
 
-// Update category (with optional image file)
-export const updateCategory = async (categoryId, formData) => {
-  const response = await api.put(`${CATEGORY_BASE}/update/${categoryId}`, formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-  });
+// Update category
+export const updateCategory = async (categoryId, data) => {
+  const response = await api.put(`${CATEGORY_BASE}/${categoryId}`, data);
   return response.data;
 };
 
 // Delete category
 export const deleteCategory = async (categoryId) => {
-  const response = await api.delete(`${CATEGORY_BASE}/delete/${categoryId}`);
+  const response = await api.delete(`${CATEGORY_BASE}/${categoryId}`);
   return response.data;
 };

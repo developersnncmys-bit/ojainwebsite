@@ -31,26 +31,8 @@ function ProductModal({ product, cartQty, onClose, onAdd, onIncrease, onDecrease
 
   useEffect(() => {
     if (!product?._id) return;
-
-    const loadReviews = async () => {
-      try {
-        setReviewsLoading(true);
-
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/reviews/product/${product._id}`
-        );
-
-        const data = await res.json();
-
-        setReviews(data.reviews || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setReviewsLoading(false);
-      }
-    };
-
-    loadReviews();
+    // No backend in this UI-only build — start with no reviews.
+    setReviews([]);
   }, [product]);
 
   const handleAdd = async () => {
@@ -60,49 +42,20 @@ function ProductModal({ product, cartQty, onClose, onAdd, onIncrease, onDecrease
     onClose();
   };
   const submitReview = async () => {
-    try {
-      setSubmittingReview(true);
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            productId: product._id,
-            vendorId: product.vendor?._id || product.vendor,
-            rating,
-            comment,
-          }),
-        }
-      );
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message);
-
-      setComment("");
-      setRating(5);
-
-      toast.success("Review submitted");
-
-      const reviewsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reviews/product/${product._id}`
-      );
-
-      const reviewsData = await reviewsRes.json();
-      setReviews(reviewsData.reviews || []);
-
-    } catch (err) {
-      toast.error(err.message || "Failed to submit review");
-    } finally {
-      setSubmittingReview(false);
-    }
+    // No backend in this UI-only build — keep the review in local state.
+    setSubmittingReview(true);
+    const newReview = {
+      _id: `review-${Date.now()}`,
+      rating,
+      comment,
+      customerId: { name: "You" },
+      createdAt: new Date().toISOString(),
+    };
+    setReviews((prev) => [newReview, ...prev]);
+    setComment("");
+    setRating(5);
+    toast.success("Review submitted");
+    setSubmittingReview(false);
   };
 
   return (

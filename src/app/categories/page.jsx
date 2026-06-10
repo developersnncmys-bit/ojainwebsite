@@ -12,28 +12,16 @@ const getImageUrl = (imagePath) => {
     return "/category1.jpg";
   }
 
-  // Already full URL
+  // Local /public asset or already-absolute URL — use as-is.
   if (
-    imagePath.startsWith("http://") ||
-    imagePath.startsWith("https://") ||
+    imagePath.startsWith("/") ||
+    imagePath.startsWith("http") ||
     imagePath.startsWith("blob:")
   ) {
     return imagePath;
   }
 
-  // Normalize slashes
-  let normalizedPath = imagePath.replace(/\\/g, "/");
-
-  // Remove starting slash
-  if (normalizedPath.startsWith("/")) {
-    normalizedPath = normalizedPath.slice(1);
-  }
-
-  const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL ||
-    "http://localhost:5000";
-
-  return `${API_BASE}/${normalizedPath}`;
+  return `/${imagePath.replace(/\\/g, "/")}`;
 };
 
 export default function CategoriesPage() {

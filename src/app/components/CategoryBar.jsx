@@ -8,11 +8,10 @@ import ScrollReveal from "./ScrollReveal";
 
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
-  if (imagePath.startsWith("blob:") || imagePath.startsWith("http")) return imagePath;
-  let normalizedPath = imagePath.replace(/\\/g, "/");
-  if (normalizedPath.startsWith("/")) normalizedPath = normalizedPath.slice(1);
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://ojain-backend-2.onrender.com";
-  return `${API_BASE}/${normalizedPath}`;
+  // Local /public asset or already-absolute URL — use as-is.
+  if (imagePath.startsWith("/") || imagePath.startsWith("blob:") || imagePath.startsWith("http"))
+    return imagePath;
+  return `/${imagePath.replace(/\\/g, "/")}`;
 };
 
 export default function CategoryBar() {

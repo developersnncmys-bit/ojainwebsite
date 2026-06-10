@@ -16,10 +16,8 @@ import { useVendor } from "../../../../hooks/useVendor";
 /* ── image url helper ─────────────────────────────────── */
 const getImageUrl = (p) => {
   if (!p) return null;
-  if (p.startsWith("blob:") || p.startsWith("http")) return p;
-  let n = p.replace(/\\/g, "/");
-  if (n.startsWith("/")) n = n.slice(1);
-  return `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/${n}`;
+  if (p.startsWith("/") || p.startsWith("blob:") || p.startsWith("http")) return p;
+  return `/${p.replace(/\\/g, "/")}`;
 };
 
 const getInitial = (v) => {
