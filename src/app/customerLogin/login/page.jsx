@@ -31,19 +31,14 @@ export default function CustomerLoginPage() {
         : { mobile: formData.mobile, otp: formData.otp };
       const res = await loginCustomer(payload);
 
-      // toast.success("Login Successful");
-
-      // if (res?.user?.role === "admin") {
-      //   router.push("/admin/dashboard");
-      // } else {
-      //   router.push("/");
-      // }
-      if (res?.user?.role === "admin") {
-        router.push("/admin/dashboard");
-      } else if (res?.user?.role === "customer") {
+      // Backend returns { success, token, customer }. A successful response
+      // (the store didn't throw) means the customer is authenticated.
+      const account = res?.customer || res?.user;
+      if (res?.token || account) {
+        toast.success("Login Successful");
         router.push("/");
       } else {
-        toast.error("Unauthorized User");
+        toast.error("Login failed — please try again");
       }
     } catch (err) {
       toast.error(err?.response?.data?.message || "Login Failed");
