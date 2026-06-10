@@ -17,10 +17,11 @@
 
 import axios from "axios";
 
-// Production default points at the Render-hosted API. For local dev, set
-// NEXT_PUBLIC_API_URL=http://localhost:5000 in .env.local (already provided).
+// Production default points at the live backend. Override per environment via
+// NEXT_PUBLIC_API_URL (e.g. http://localhost:5000 for local dev, or the Render
+// URL once that service is deployed).
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "https://ojainbackend.onrender.com";
+  process.env.NEXT_PUBLIC_API_URL || "https://ojainbackend.vercel.app";
 
 const api = axios.create({
   baseURL,
