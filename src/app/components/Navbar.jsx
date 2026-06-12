@@ -243,20 +243,42 @@ function Navbar() {
               </Link>
 
               {/* USER / LOGIN */}
-              {/* <div className="hidden md:block">
+              <div className="relative hidden md:block" ref={userRef}>
                 {user ? (
                   <>
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
                       className="flex items-center gap-2 bg-brand-green-pale hover:bg-brand-green/15 text-brand-green px-3 py-2 rounded-xl transition"
                     >
-                      <div className="w-6 h-6 rounded-full bg-brand-green text-white flex items-center justify-center text-[11px] font-black shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-brand-green text-white flex items-center justify-center text-[12px] font-black shrink-0">
                         {(user.name || "U")[0].toUpperCase()}
                       </div>
-                      <span className="text-[13px] font-bold max-w-[80px] truncate">
+                      <span className="text-[13px] font-bold max-w-[90px] truncate">
                         {user.name?.split(" ")[0] || "Account"}
                       </span>
+                      <FaChevronDown size={11} className={`transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
                     </button>
+
+                    {userMenuOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                        <div className="px-4 py-3 bg-brand-green-pale">
+                          <p className="text-sm font-bold text-gray-800 truncate">{user.name}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                        <button
+                          onClick={() => { setUserMenuOpen(false); router.push("/cart"); }}
+                          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition"
+                        >
+                          🛒 My Cart
+                        </button>
+                        <button
+                          onClick={() => { logout(); setUserMenuOpen(false); router.push("/"); }}
+                          className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition"
+                        >
+                          <FaSignOutAlt size={13} /> Logout
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <Link
@@ -267,15 +289,6 @@ function Navbar() {
                     Login
                   </Link>
                 )}
-              </div> */}
-              <div className="hidden md:block">
-                <Link
-                  href="/customerLogin/login"
-                  className="flex items-center gap-2 bg-brand-green hover:bg-[#1B5E20] text-white px-4 py-2.5 rounded-xl text-[13px] font-bold transition shadow-sm"
-                >
-                  <FaUserCircle size={14} />
-                  Login
-                </Link>
               </div>
               {/* CART */}
               <button

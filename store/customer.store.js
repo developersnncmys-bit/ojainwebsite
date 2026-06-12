@@ -1,5 +1,6 @@
 // store/customer.store.js
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import {
   registerCustomerService,
   loginCustomerService,
@@ -14,7 +15,9 @@ const clearToken = ()      => { if (typeof window !== "undefined") localStorage.
 
 let profileRequest = null;
 
-export const useCustomerStore = create((set, get) => ({
+export const useCustomerStore = create(
+  persist(
+    (set, get) => ({
   customer: null,
   loading:  false,
   error:    null,
@@ -101,4 +104,12 @@ export const useCustomerStore = create((set, get) => ({
     profileRequest = null;
     set({ customer: null, loading: false, error: null });
   },
-}));
+    }),
+    {
+      name: "ojain-customer",
+      storage: createJSONStorage(() => localStorage),
+      // Persist only the logged-in customer, not transient loading/error state.
+      partialize: (state) => ({ customer: state.customer }),
+    }
+  )
+);
