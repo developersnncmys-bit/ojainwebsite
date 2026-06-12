@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { FaLeaf } from "react-icons/fa";
+import { FaLeaf, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useCustomer } from "../../../../hooks/useCustomer";
 import { validateName, validateEmail, validateMobile, validatePassword } from "../../../../shared/validation";
 
@@ -14,6 +14,7 @@ export default function CustomerRegisterPage() {
 
   const [formData, setFormData] = useState({ name: "", email: "", password: "", phone: "" });
   const [validationErrors, setValidationErrors] = useState({ name: "", email: "", password: "", phone: "" });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -128,8 +129,15 @@ export default function CustomerRegisterPage() {
             {/* PASSWORD */}
             <div>
               <label className="text-sm font-medium text-gray-700 mb-2 block">Password</label>
-              <input type="password" name="password" placeholder="Enter your password"
-                value={formData.password} onChange={handleChange} className={inputClass} />
+              <div className="relative">
+                <input type={showPassword ? "text" : "password"} name="password" placeholder="Enter your password"
+                  value={formData.password} onChange={handleChange} className={`${inputClass} pr-12`} />
+                <button type="button" onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-green transition">
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
               {validationErrors.password && <p className="text-red-500 text-sm mt-1">{validationErrors.password}</p>}
             </div>
 

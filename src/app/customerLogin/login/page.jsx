@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { FaEnvelope, FaLock, FaPhoneAlt, FaLeaf } from "react-icons/fa";
+import { FaEnvelope, FaLock, FaPhoneAlt, FaLeaf, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useCustomer } from "../../../../hooks/useCustomer";
 
 export default function CustomerLoginPage() {
@@ -13,6 +13,7 @@ export default function CustomerLoginPage() {
 
   const [loginType, setLoginType] = useState("email");
   const [otpSent, setOtpSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", mobile: "", password: "", otp: "" });
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -139,9 +140,14 @@ export default function CustomerLoginPage() {
                   <label className="text-sm font-medium text-gray-700 mb-2 block">Password</label>
                   <div className="relative">
                     <FaLock className="absolute left-5 top-1/2 -translate-y-1/2 text-brand-green" />
-                    <input type="password" name="password" placeholder="Enter your password"
+                    <input type={showPassword ? "text" : "password"} name="password" placeholder="Enter your password"
                       value={formData.password} onChange={handleChange} required
-                      className="w-full border border-gray-300 rounded-2xl pl-14 pr-4 py-4 outline-none focus:ring-2 focus:ring-brand-green-mid focus:border-brand-green transition" />
+                      className="w-full border border-gray-300 rounded-2xl pl-14 pr-12 py-4 outline-none focus:ring-2 focus:ring-brand-green-mid focus:border-brand-green transition" />
+                    <button type="button" onClick={() => setShowPassword((v) => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-green transition">
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
                   </div>
                 </div>
               </>
